@@ -281,6 +281,30 @@ const Index = () => {
         ctx.arc(mx, my, spotR, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalCompositeOperation = "source-over";
+
+        // reveal tracking: if the spotlight lingers near a quote, mark it revealed and swap it
+        const revealRadius = 140;
+        let needsRedraw = false;
+        for (let i = 0; i < quotes.length; i++) {
+          const q = quotes[i];
+          if (q.revealed) continue;
+          const dx = q.x - mx;
+          const dy = q.y - my;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < revealRadius) {
+            q.revealProgress += (1 - dist / revealRadius) * 0.02;
+            if (q.revealProgress >= 1) {
+              q.revealed = true;
+              // delay the swap slightly so the user sees it fully revealed
+              setTimeout(() => {
+                replaceQuoteSlot(i);
+                drawQuotes();
+              }, 1200);
+            }
+          }
+          if (q.revealProgress > 0 && !q.revealed) needsRedraw = true;
+        }
+        if (needsRedraw) drawQuotes();
       }
 
       raf = requestAnimationFrame(draw);
