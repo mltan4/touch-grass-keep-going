@@ -290,7 +290,7 @@ const Index = () => {
       window.removeEventListener("mouseleave", onLeave);
       window.removeEventListener("touchend", onLeave);
     };
-  }, []);
+  }, [quotePool]);
 
   return (
     <main className="fixed inset-0 overflow-hidden" style={{ cursor: "none" }}>
