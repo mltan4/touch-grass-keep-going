@@ -23,7 +23,11 @@ interface Quote {
   y: number;
   maxWidth: number;
   rotation: number;
+  revealProgress: number;
+  revealed: boolean;
 }
+
+const MAX_ON_SCREEN = 12;
 
 const FALLBACK_QUOTES: { text: string; author: string }[] = [
   { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
@@ -56,17 +60,32 @@ const Index = () => {
 
   useEffect(() => {
     if (quotePool.length === 0) return;
-    const QUOTES = quotePool;
     const grassCanvas = grassCanvasRef.current!;
     const quotesCanvas = quotesCanvasRef.current!;
     const ctx = grassCanvas.getContext("2d")!;
     const qctx = quotesCanvas.getContext("2d")!;
     let blades: Blade[] = [];
     let quotes: Quote[] = [];
+    let queue: { text: string; author: string }[] = [];
+    let replaceQuoteSlot: (i: number) => void = () => {};
     let raf = 0;
     let width = 0;
     let height = 0;
     let bgReady = false;
+
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    const nextQuote = (): { text: string; author: string } => {
+      if (queue.length === 0) queue = shuffle(quotePool);
+      return queue.shift()!;
+    };
 
     const bgImage = new Image();
     bgImage.src = grassTexture;
@@ -165,27 +184,39 @@ const Index = () => {
       blades.sort((a, b) => a.baseY - b.baseY);
 
       // scatter quotes in a loose grid to avoid overlap
-      quotes = [];
-      const cols = width < 700 ? 2 : 3;
-      const rows = Math.ceil(QUOTES.length / cols);
+      const onScreen = Math.min(MAX_ON_SCREEN, quotePool.length);
+      const cols = width < 700 ? 2 : Math.min(3, onScreen);
+      const rows = Math.ceil(onScreen / cols);
       const cellW = width / cols;
       const cellH = height / rows;
       const maxWidth = Math.min(cellW * 0.85, 360);
 
-      QUOTES.forEach((q, i) => {
+      const makeQuoteAt = (i: number): Quote => {
         const col = i % cols;
         const row = Math.floor(i / cols);
         const cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.2;
         const cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.2;
-        quotes.push({
+        const q = nextQuote();
+        return {
           text: q.text,
           author: q.author,
           x: cx,
           y: cy,
           maxWidth,
           rotation: (Math.random() - 0.5) * 0.08,
-        });
-      });
+          revealProgress: 0,
+          revealed: false,
+        };
+      };
+
+      // expose for use inside draw() to recycle a slot after reveal
+      replaceQuoteSlot = (i: number) => {
+        quotes[i] = makeQuoteAt(i);
+      };
+
+      queue = shuffle(quotePool);
+      quotes = [];
+      for (let i = 0; i < onScreen; i++) quotes.push(makeQuoteAt(i));
 
       drawQuotes();
     };
@@ -250,6 +281,30 @@ const Index = () => {
         ctx.arc(mx, my, spotR, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalCompositeOperation = "source-over";
+
+        // reveal tracking: if the spotlight lingers near a quote, mark it revealed and swap it
+        const revealRadius = 140;
+        let needsRedraw = false;
+        for (let i = 0; i < quotes.length; i++) {
+          const q = quotes[i];
+          if (q.revealed) continue;
+          const dx = q.x - mx;
+          const dy = q.y - my;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < revealRadius) {
+            q.revealProgress += (1 - dist / revealRadius) * 0.02;
+            if (q.revealProgress >= 1) {
+              q.revealed = true;
+              // delay the swap slightly so the user sees it fully revealed
+              setTimeout(() => {
+                replaceQuoteSlot(i);
+                drawQuotes();
+              }, 1200);
+            }
+          }
+          if (q.revealProgress > 0 && !q.revealed) needsRedraw = true;
+        }
+        if (needsRedraw) drawQuotes();
       }
 
       raf = requestAnimationFrame(draw);
