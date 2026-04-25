@@ -266,17 +266,39 @@ const Index = () => {
       // store puddle box for hand-washing detection
       puddleBox = { left: puddleLeft, top: puddleTop, right: puddleRight, bottom: puddleBottom };
 
-      // hide 3 poops in random spots, away from the puddle and screen edges
+      // hide 3 poops in random spots, away from the puddle, screen edges, and quotes
       poops = [];
+      const quoteClearance = 140;
+      const poopClearance = 80;
       for (let i = 0; i < 3; i++) {
         let px = 0;
         let py = 0;
-        for (let attempt = 0; attempt < 30; attempt++) {
+        const size = 32 + Math.random() * 14;
+        for (let attempt = 0; attempt < 80; attempt++) {
           px = 80 + Math.random() * (width - 160);
           py = 80 + Math.random() * (height - 160);
-          if (!inPuddle(px, py, 60)) break;
+          if (inPuddle(px, py, 60)) continue;
+          let clash = false;
+          for (const q of quotes) {
+            const dx = q.x - px;
+            const dy = q.y - py;
+            if (dx * dx + dy * dy < quoteClearance * quoteClearance) {
+              clash = true;
+              break;
+            }
+          }
+          if (clash) continue;
+          for (const other of poops) {
+            const dx = other.x - px;
+            const dy = other.y - py;
+            if (dx * dx + dy * dy < poopClearance * poopClearance) {
+              clash = true;
+              break;
+            }
+          }
+          if (!clash) break;
         }
-        poops.push({ x: px, y: py, size: 32 + Math.random() * 14 });
+        poops.push({ x: px, y: py, size });
       }
 
       drawQuotes();
