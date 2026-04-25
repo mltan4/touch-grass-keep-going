@@ -57,12 +57,12 @@ const Index = () => {
     let raf = 0;
     let width = 0;
     let height = 0;
-    let bgPattern: CanvasPattern | null = null;
+    let bgReady = false;
 
     const bgImage = new Image();
     bgImage.src = grassTexture;
     bgImage.onload = () => {
-      bgPattern = ctx.createPattern(bgImage, "repeat");
+      bgReady = true;
     };
 
     const wrapLines = (text: string, maxWidth: number, fontPx: number): string[] => {
@@ -85,10 +85,10 @@ const Index = () => {
 
     const drawQuotes = () => {
       qctx.clearRect(0, 0, width, height);
-      // soft background gradient (what the spotlight reveals beneath the grass)
+      // rich soil background (what the spotlight reveals beneath the grass)
       const bg = qctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) / 1.2);
-      bg.addColorStop(0, "hsl(45, 30%, 12%)");
-      bg.addColorStop(1, "hsl(35, 25%, 6%)");
+      bg.addColorStop(0, "hsl(28, 45%, 22%)");
+      bg.addColorStop(1, "hsl(22, 50%, 10%)");
       qctx.fillStyle = bg;
       qctx.fillRect(0, 0, width, height);
 
@@ -182,11 +182,10 @@ const Index = () => {
     };
 
     const draw = (t: number) => {
-      // realistic grass photo background (tiled)
+      // realistic grass photo, stretched to cover the viewport (no tiling)
       ctx.globalCompositeOperation = "source-over";
-      if (bgPattern) {
-        ctx.fillStyle = bgPattern;
-        ctx.fillRect(0, 0, width, height);
+      if (bgReady) {
+        ctx.drawImage(bgImage, 0, 0, width, height);
       } else {
         ctx.fillStyle = "hsl(110, 45%, 25%)";
         ctx.fillRect(0, 0, width, height);
