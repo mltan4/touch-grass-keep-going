@@ -395,7 +395,7 @@ const Index = () => {
 
     const CLEAN_FILTER = "drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
     const DIRTY_FILTER =
-      "sepia(1) saturate(4) hue-rotate(-40deg) brightness(0.45) contrast(1.2) drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
+      "sepia(1) saturate(5) hue-rotate(-35deg) brightness(0.35) contrast(1.4) blur(0.4px) drop-shadow(0 0 6px rgba(60,30,10,0.9)) drop-shadow(0 4px 6px rgba(0,0,0,0.6))";
 
     const onMove = (x: number, y: number) => {
       mouseRef.current.x = x;
@@ -421,9 +421,10 @@ const Index = () => {
       }
 
       if (handRef.current) {
-        handRef.current.style.transform = `translate(${x - 18}px, ${y - 18}px) rotate(-15deg)`;
+        handRef.current.style.transform = `translate(${x - 36}px, ${y - 36}px) rotate(-15deg)`;
         handRef.current.style.opacity = "1";
         handRef.current.style.filter = dirtyRef.current ? DIRTY_FILTER : CLEAN_FILTER;
+        handRef.current.innerHTML = dirtyRef.current ? "✋💩" : "✋";
       }
     };
 
@@ -475,7 +476,7 @@ const Index = () => {
       <div
         ref={handRef}
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-10 select-none text-4xl transition-opacity duration-200"
+        className="pointer-events-none fixed left-0 top-0 z-10 select-none text-7xl transition-opacity duration-200"
         style={{ opacity: 0, filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.5))" }}
       >
         ✋
