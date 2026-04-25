@@ -226,13 +226,14 @@ const Index = () => {
       const rows = Math.ceil(onScreen / cols);
       const cellW = width / cols;
       const cellH = height / rows;
-      const maxWidth = Math.min(cellW * 0.85, 360);
+      const maxWidth = Math.min(cellW * 0.78, 320);
 
       const makeQuoteAt = (i: number): Quote => {
         const col = i % cols;
         const row = Math.floor(i / cols);
-        let cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.2;
-        let cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.2;
+        // smaller jitter so quotes stay inside their cell and don't overlap neighbours
+        let cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.08;
+        let cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.08;
         // if the quote would fall behind the puddle, push it up & right out of the way
         if (inPuddle(cx, cy)) {
           cy = Math.max(cy, puddleTop - 60);
@@ -248,7 +249,7 @@ const Index = () => {
           x: cx,
           y: cy,
           maxWidth,
-          rotation: (Math.random() - 0.5) * 0.08,
+          rotation: (Math.random() - 0.5) * 0.06,
           revealProgress: 0,
           revealed: false,
         };
