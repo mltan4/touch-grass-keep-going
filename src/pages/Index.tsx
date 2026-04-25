@@ -1,5 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import grassTexture from "@/assets/grass.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Blade {
   x: number;
@@ -23,22 +25,8 @@ interface Quote {
   rotation: number;
 }
 
-const QUOTES: { text: string; author: string }[] = [
+const FALLBACK_QUOTES: { text: string; author: string }[] = [
   { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
-  { text: "Energy and persistence conquer all things.", author: "Benjamin Franklin" },
-  { text: "Through perseverance many people win success out of what seemed destined to be certain failure.", author: "Benjamin Disraeli" },
-  { text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela" },
-  { text: "You may encounter many defeats, but you must not be defeated.", author: "Maya Angelou" },
-  { text: "Rock bottom became the solid foundation on which I rebuilt my life.", author: "J.K. Rowling" },
-  { text: "If you're going through hell, keep going.", author: "Winston Churchill" },
-  { text: "I can accept failure, everyone fails at something. But I can't accept not trying.", author: "Michael Jordan" },
-  { text: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky" },
-  { text: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", author: "Aristotle" },
-  { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
-  { text: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
-  { text: "Success is not final, failure is not fatal, it is the courage to continue that counts.", author: "Winston Churchill" },
-  { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
-  { text: "The difference between the impossible and the possible lies in a person's determination.", author: "Tommy Lasorda" },
 ];
 
 const Index = () => {
@@ -46,8 +34,29 @@ const Index = () => {
   const grassCanvasRef = useRef<HTMLCanvasElement>(null);
   const handRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
+  const [quotePool, setQuotePool] = useState<{ text: string; author: string }[]>(FALLBACK_QUOTES);
 
   useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("quotes")
+      .select("text, author")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data || data.length === 0) {
+          console.warn("Could not load quotes from database, using fallback", error);
+          return;
+        }
+        setQuotePool(data as { text: string; author: string }[]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (quotePool.length === 0) return;
+    const QUOTES = quotePool;
     const grassCanvas = grassCanvasRef.current!;
     const quotesCanvas = quotesCanvasRef.current!;
     const ctx = grassCanvas.getContext("2d")!;
@@ -281,7 +290,7 @@ const Index = () => {
       window.removeEventListener("mouseleave", onLeave);
       window.removeEventListener("touchend", onLeave);
     };
-  }, []);
+  }, [quotePool]);
 
   return (
     <main className="fixed inset-0 overflow-hidden" style={{ cursor: "none" }}>
@@ -299,6 +308,13 @@ const Index = () => {
       <div className="pointer-events-none fixed bottom-6 left-1/2 z-10 -translate-x-1/2 text-xs uppercase tracking-[0.3em] text-white/50">
         part the grass — find what's hidden
       </div>
+      <Link
+        to="/admin"
+        className="fixed bottom-4 right-4 z-10 text-xs uppercase tracking-[0.2em] text-white/30 hover:text-white/70 transition-colors"
+        style={{ cursor: "none" }}
+      >
+        admin
+      </Link>
     </main>
   );
 };
