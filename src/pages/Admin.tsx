@@ -136,6 +136,41 @@ const Admin = () => {
     toast.success("Quote deleted");
   };
 
+  const handleBulkAdd = async () => {
+    const lines = bulkText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const splitRe = /\s+[—–]\s+|\s+-\s+/;
+    const parsed: { text: string; author: string }[] = [];
+    const skipped: string[] = [];
+    for (const line of lines) {
+      const m = line.match(splitRe);
+      if (!m || m.index === undefined) {
+        skipped.push(line);
+        continue;
+      }
+      const text = line.slice(0, m.index).trim().replace(/^["“]|["”]$/g, "").trim();
+      const author = line.slice(m.index + m[0].length).trim();
+      if (text && author) parsed.push({ text, author });
+      else skipped.push(line);
+    }
+    if (parsed.length === 0) {
+      toast.error("No valid quotes found. Use format: Quote — Author");
+      return;
+    }
+    setBulkLoading(true);
+    const { data, error } = await supabase
+      .from("quotes")
+      .insert(parsed)
+      .select("id, text, author, created_at");
+    setBulkLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setQuotes((prev) => [...(data ?? []), ...prev]);
+    setBulkText("");
+    toast.success(`Added ${data?.length ?? 0} quotes${skipped.length ? `, skipped ${skipped.length}` : ""}`);
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-background">
