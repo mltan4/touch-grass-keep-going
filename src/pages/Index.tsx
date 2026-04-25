@@ -576,8 +576,9 @@ const Index = () => {
           left: PUDDLE.marginLeft,
           bottom: PUDDLE.marginBottom,
           width: `clamp(${PUDDLE.minWidth}px, ${PUDDLE.widthPct * 100}vw, ${PUDDLE.maxWidth}px)`,
-          filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.55))",
+          filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.4))",
           mixBlendMode: "multiply",
+          opacity: 0.55,
           transformOrigin: "center bottom",
         }}
       />
