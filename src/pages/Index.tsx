@@ -182,11 +182,10 @@ const Index = () => {
     };
 
     const draw = (t: number) => {
-      // realistic grass photo background (tiled)
+      // realistic grass photo, stretched to cover the viewport (no tiling)
       ctx.globalCompositeOperation = "source-over";
-      if (bgPattern) {
-        ctx.fillStyle = bgPattern;
-        ctx.fillRect(0, 0, width, height);
+      if (bgReady) {
+        ctx.drawImage(bgImage, 0, 0, width, height);
       } else {
         ctx.fillStyle = "hsl(110, 45%, 25%)";
         ctx.fillRect(0, 0, width, height);
