@@ -231,6 +231,24 @@ SELECT id, 'admin' FROM auth.users WHERE email = '${userEmail}';`}
           </form>
         </Card>
 
+        <Card className="p-6">
+          <h2 className="text-lg font-medium mb-2 flex items-center gap-2"><Plus className="h-4 w-4" /> Bulk add</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Paste one quote per line, formatted as <code className="px-1 bg-muted rounded">Quote — Author</code>. Supports —, –, or - as the separator. Blank lines are ignored.
+          </p>
+          <div className="space-y-3">
+            <Textarea
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              rows={8}
+              placeholder={"Fall seven times, stand up eight. — Japanese Proverb\nThe harder the conflict, the greater the triumph. — George Washington"}
+            />
+            <Button onClick={handleBulkAdd} disabled={bulkLoading || !bulkText.trim()}>
+              {bulkLoading ? "Adding…" : "Add all"}
+            </Button>
+          </div>
+        </Card>
+
         <div className="space-y-3">
           <h2 className="text-lg font-medium">All quotes ({quotes.length})</h2>
           {quotes.map((q) => (
