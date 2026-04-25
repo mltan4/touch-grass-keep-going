@@ -57,12 +57,12 @@ const Index = () => {
     let raf = 0;
     let width = 0;
     let height = 0;
-    let bgPattern: CanvasPattern | null = null;
+    let bgReady = false;
 
     const bgImage = new Image();
     bgImage.src = grassTexture;
     bgImage.onload = () => {
-      bgPattern = ctx.createPattern(bgImage, "repeat");
+      bgReady = true;
     };
 
     const wrapLines = (text: string, maxWidth: number, fontPx: number): string[] => {
