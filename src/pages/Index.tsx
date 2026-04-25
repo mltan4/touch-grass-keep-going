@@ -23,6 +23,8 @@ interface Blade {
   sat: number;
   light: number;
   phase: number;
+  speed: number;
+  amp: number;
   bend: number;
   targetBend: number;
 }
