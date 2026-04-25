@@ -621,6 +621,14 @@ const Index = () => {
       >
         ✋
       </div>
+      <div
+        ref={bubblesRef}
+        aria-hidden
+        className="pointer-events-none fixed left-0 top-0 z-20 select-none text-3xl leading-none transition-opacity"
+        style={{ opacity: 0, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.4))" }}
+      >
+        🫧💦🫧
+      </div>
       <div className="pointer-events-none fixed bottom-6 left-1/2 z-10 -translate-x-1/2 text-xs uppercase tracking-[0.3em] text-white/50">
         part the grass — find what's hidden
       </div>
