@@ -162,6 +162,19 @@ const Index = () => {
 
         qctx.restore();
       }
+
+      // poops, hidden in the field — drawn on the quotes canvas so the spotlight reveals them too
+      for (const p of poops) {
+        qctx.save();
+        qctx.translate(p.x, p.y);
+        qctx.font = `${p.size}px serif`;
+        qctx.textAlign = "center";
+        qctx.textBaseline = "middle";
+        qctx.shadowColor = "rgba(0,0,0,0.6)";
+        qctx.shadowBlur = 8;
+        qctx.fillText("💩", 0, 0);
+        qctx.restore();
+      }
     };
 
     const generate = () => {
