@@ -182,13 +182,15 @@ const Index = () => {
     };
 
     const draw = (t: number) => {
-      // grass background gradient
-      const grad = ctx.createLinearGradient(0, 0, 0, height);
-      grad.addColorStop(0, "hsl(140, 40%, 8%)");
-      grad.addColorStop(1, "hsl(110, 35%, 14%)");
+      // realistic grass photo background (tiled)
       ctx.globalCompositeOperation = "source-over";
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
+      if (bgPattern) {
+        ctx.fillStyle = bgPattern;
+        ctx.fillRect(0, 0, width, height);
+      } else {
+        ctx.fillStyle = "hsl(110, 45%, 25%)";
+        ctx.fillRect(0, 0, width, height);
+      }
 
       const mx = mouseRef.current.x;
       const my = mouseRef.current.y;
