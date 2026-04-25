@@ -89,6 +89,9 @@ const Index = () => {
     let height = 0;
     let bgReady = false;
     let puddleBox = { left: 0, top: 0, right: 0, bottom: 0 };
+    // raindrops live across frames so they fall continuously during a storm
+    let drops: { x: number; y: number; len: number; speed: number }[] = [];
+    const startedAt = performance.now();
 
     const shuffle = <T,>(arr: T[]): T[] => {
       const a = [...arr];
