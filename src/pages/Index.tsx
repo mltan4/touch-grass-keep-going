@@ -57,6 +57,13 @@ const Index = () => {
     let raf = 0;
     let width = 0;
     let height = 0;
+    let bgPattern: CanvasPattern | null = null;
+
+    const bgImage = new Image();
+    bgImage.src = grassTexture;
+    bgImage.onload = () => {
+      bgPattern = ctx.createPattern(bgImage, "repeat");
+    };
 
     const wrapLines = (text: string, maxWidth: number, fontPx: number): string[] => {
       qctx.font = `italic ${fontPx}px 'Georgia', serif`;
