@@ -308,6 +308,13 @@ const Index = () => {
       <div className="pointer-events-none fixed bottom-6 left-1/2 z-10 -translate-x-1/2 text-xs uppercase tracking-[0.3em] text-white/50">
         part the grass — find what's hidden
       </div>
+      <Link
+        to="/admin"
+        className="fixed bottom-4 right-4 z-10 text-xs uppercase tracking-[0.2em] text-white/30 hover:text-white/70 transition-colors"
+        style={{ cursor: "none" }}
+      >
+        admin
+      </Link>
     </main>
   );
 };
