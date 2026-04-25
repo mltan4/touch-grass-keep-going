@@ -395,7 +395,7 @@ const Index = () => {
 
     const CLEAN_FILTER = "drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
     const DIRTY_FILTER =
-      "sepia(1) saturate(3) hue-rotate(-30deg) brightness(0.55) drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
+      "sepia(1) saturate(4) hue-rotate(-40deg) brightness(0.45) contrast(1.2) drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
 
     const onMove = (x: number, y: number) => {
       mouseRef.current.x = x;
