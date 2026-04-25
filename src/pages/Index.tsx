@@ -78,12 +78,14 @@ const Index = () => {
     const qctx = quotesCanvas.getContext("2d")!;
     let blades: Blade[] = [];
     let quotes: Quote[] = [];
+    let poops: { x: number; y: number; size: number }[] = [];
     let queue: { text: string; author: string }[] = [];
     let replaceQuoteSlot: (i: number) => void = () => {};
     let raf = 0;
     let width = 0;
     let height = 0;
     let bgReady = false;
+    let puddleBox = { left: 0, top: 0, right: 0, bottom: 0 };
 
     const shuffle = <T,>(arr: T[]): T[] => {
       const a = [...arr];
