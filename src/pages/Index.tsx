@@ -60,7 +60,6 @@ const Index = () => {
 
   useEffect(() => {
     if (quotePool.length === 0) return;
-    const QUOTES = quotePool;
     const grassCanvas = grassCanvasRef.current!;
     const quotesCanvas = quotesCanvasRef.current!;
     const ctx = grassCanvas.getContext("2d")!;
@@ -68,6 +67,7 @@ const Index = () => {
     let blades: Blade[] = [];
     let quotes: Quote[] = [];
     let queue: { text: string; author: string }[] = [];
+    let replaceQuoteSlot: (i: number) => void = () => {};
     let raf = 0;
     let width = 0;
     let height = 0;
