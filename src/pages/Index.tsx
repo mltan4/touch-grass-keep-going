@@ -371,13 +371,37 @@ const Index = () => {
       raf = requestAnimationFrame(draw);
     };
 
+    const CLEAN_FILTER = "drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
+    const DIRTY_FILTER =
+      "sepia(1) saturate(3) hue-rotate(-30deg) brightness(0.55) drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
+
     const onMove = (x: number, y: number) => {
       mouseRef.current.x = x;
       mouseRef.current.y = y;
       mouseRef.current.active = true;
+
+      // poop touch — center hit only
+      if (!dirtyRef.current) {
+        for (const p of poops) {
+          const dx = x - p.x;
+          const dy = y - p.y;
+          if (dx * dx + dy * dy < (p.size * 0.35) * (p.size * 0.35)) {
+            dirtyRef.current = true;
+            break;
+          }
+        }
+      } else {
+        // wash hand if cursor enters the puddle
+        const pb = puddleBox;
+        if (x >= pb.left && x <= pb.right && y >= pb.top && y <= pb.bottom) {
+          dirtyRef.current = false;
+        }
+      }
+
       if (handRef.current) {
         handRef.current.style.transform = `translate(${x - 18}px, ${y - 18}px) rotate(-15deg)`;
         handRef.current.style.opacity = "1";
+        handRef.current.style.filter = dirtyRef.current ? DIRTY_FILTER : CLEAN_FILTER;
       }
     };
 
