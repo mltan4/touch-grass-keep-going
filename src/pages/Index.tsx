@@ -503,16 +503,18 @@ const Index = () => {
       <canvas ref={quotesCanvasRef} className="absolute inset-0 block h-full w-full" />
       <canvas ref={grassCanvasRef} className="absolute inset-0 block h-full w-full" />
       <img
+        ref={puddleRef}
         src={puddleImage}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute z-[5] select-none"
+        className="pointer-events-none absolute z-[5] select-none will-change-transform"
         style={{
           left: PUDDLE.marginLeft,
           bottom: PUDDLE.marginBottom,
           width: `clamp(${PUDDLE.minWidth}px, ${PUDDLE.widthPct * 100}vw, ${PUDDLE.maxWidth}px)`,
           filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.55))",
           mixBlendMode: "multiply",
+          transformOrigin: "center bottom",
         }}
       />
       <div
