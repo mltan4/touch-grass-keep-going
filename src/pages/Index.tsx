@@ -381,6 +381,19 @@ const Index = () => {
       <h1 className="sr-only">Touch Grass — Inspirational Quotes Hidden in a Field</h1>
       <canvas ref={quotesCanvasRef} className="absolute inset-0 block h-full w-full" />
       <canvas ref={grassCanvasRef} className="absolute inset-0 block h-full w-full" />
+      <img
+        src={puddleImage}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute z-[5] select-none"
+        style={{
+          left: PUDDLE.marginLeft,
+          bottom: PUDDLE.marginBottom,
+          width: `clamp(${PUDDLE.minWidth}px, ${PUDDLE.widthPct * 100}vw, ${PUDDLE.maxWidth}px)`,
+          filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.55))",
+          mixBlendMode: "multiply",
+        }}
+      />
       <div
         ref={handRef}
         aria-hidden
