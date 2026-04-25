@@ -53,6 +53,8 @@ const Index = () => {
   const puddleRef = useRef<HTMLImageElement>(null);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
   const dirtyRef = useRef(false);
+  const rinsingRef = useRef(0); // counts down while the rinse animation plays
+  const bubblesRef = useRef<HTMLDivElement>(null);
   const handWobbleRef = useRef(0);
   const puddleWobbleRef = useRef(0);
   const [quotePool, setQuotePool] = useState<{ text: string; author: string }[]>(FALLBACK_QUOTES);
