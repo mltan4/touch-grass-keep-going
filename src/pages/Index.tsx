@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import grassTexture from "@/assets/grass.jpg";
 
 interface Blade {
   x: number;
