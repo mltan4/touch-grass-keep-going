@@ -139,7 +139,7 @@ const Index = () => {
         qctx.translate(q.x, q.y);
         qctx.rotate(q.rotation);
 
-        const fontPx = Math.max(16, Math.min(22, width / 50));
+        const fontPx = Math.max(14, Math.min(20, width / 50)) * 0.9;
         const lines = wrapLines(q.text, q.maxWidth, fontPx);
         const lineHeight = fontPx * 1.4;
         const totalH = lines.length * lineHeight;
