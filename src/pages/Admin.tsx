@@ -27,6 +27,8 @@ const Admin = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editAuthor, setEditAuthor] = useState("");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => {
     document.title = "Manage Quotes — Touch Grass";
