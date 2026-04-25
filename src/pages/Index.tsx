@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import grassTexture from "@/assets/grass.jpg";
+import puddleImage from "@/assets/puddle.png";
 import { supabase } from "@/integrations/supabase/client";
+
+// puddle position/size — kept in one place so quote layout can avoid it
+const PUDDLE = {
+  // bottom-left, sized relative to viewport
+  widthPct: 0.28, // 28% of viewport width
+  maxWidth: 360,
+  minWidth: 200,
+  marginLeft: 24,
+  marginBottom: 24,
+};
 
 interface Blade {
   x: number;
