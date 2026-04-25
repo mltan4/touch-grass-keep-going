@@ -48,8 +48,11 @@ const Index = () => {
   const quotesCanvasRef = useRef<HTMLCanvasElement>(null);
   const grassCanvasRef = useRef<HTMLCanvasElement>(null);
   const handRef = useRef<HTMLDivElement>(null);
+  const puddleRef = useRef<HTMLImageElement>(null);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
   const dirtyRef = useRef(false);
+  const handWobbleRef = useRef(0);
+  const puddleWobbleRef = useRef(0);
   const [quotePool, setQuotePool] = useState<{ text: string; author: string }[]>(FALLBACK_QUOTES);
 
   useEffect(() => {
@@ -139,7 +142,7 @@ const Index = () => {
         qctx.translate(q.x, q.y);
         qctx.rotate(q.rotation);
 
-        const fontPx = Math.max(16, Math.min(22, width / 50));
+        const fontPx = Math.max(14, Math.min(20, width / 50)) * 0.9;
         const lines = wrapLines(q.text, q.maxWidth, fontPx);
         const lineHeight = fontPx * 1.4;
         const totalH = lines.length * lineHeight;
@@ -226,13 +229,14 @@ const Index = () => {
       const rows = Math.ceil(onScreen / cols);
       const cellW = width / cols;
       const cellH = height / rows;
-      const maxWidth = Math.min(cellW * 0.85, 360);
+      const maxWidth = Math.min(cellW * 0.78, 320);
 
       const makeQuoteAt = (i: number): Quote => {
         const col = i % cols;
         const row = Math.floor(i / cols);
-        let cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.2;
-        let cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.2;
+        // smaller jitter so quotes stay inside their cell and don't overlap neighbours
+        let cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.08;
+        let cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.08;
         // if the quote would fall behind the puddle, push it up & right out of the way
         if (inPuddle(cx, cy)) {
           cy = Math.max(cy, puddleTop - 60);
@@ -248,7 +252,7 @@ const Index = () => {
           x: cx,
           y: cy,
           maxWidth,
-          rotation: (Math.random() - 0.5) * 0.08,
+          rotation: (Math.random() - 0.5) * 0.06,
           revealProgress: 0,
           revealed: false,
         };
@@ -319,6 +323,9 @@ const Index = () => {
       const radius = 110;
       const radiusSq = radius * radius;
       const time = t * 0.001;
+      // a slow, drifting wind that pushes all blades in the same direction,
+      // with a faster gust riding on top for a natural "breeze" feel
+      const wind = Math.sin(time * 0.5) * 6 + Math.sin(time * 1.7 + 1.3) * 3;
 
       for (const b of blades) {
         const ambient = Math.sin(time * 1.2 + b.phase) * 3;
@@ -333,7 +340,7 @@ const Index = () => {
             push = Math.sign(dx) * strength * strength * 32;
           }
         }
-        b.targetBend = ambient + push;
+        b.targetBend = ambient + wind + push;
         b.bend += (b.targetBend - b.bend) * 0.18;
 
         const tipX = b.x + b.bend;
@@ -409,6 +416,7 @@ const Index = () => {
           const dy = y - p.y;
           if (dx * dx + dy * dy < (p.size * 0.35) * (p.size * 0.35)) {
             dirtyRef.current = true;
+            handWobbleRef.current = 1; // kick off recoil shake
             break;
           }
         }
@@ -420,13 +428,46 @@ const Index = () => {
         }
       }
 
-      if (handRef.current) {
-        handRef.current.style.transform = `translate(${x - 36}px, ${y - 36}px) rotate(-15deg)`;
+      // ripple the puddle whenever the cursor is over it
+      const pb = puddleBox;
+      if (x >= pb.left && x <= pb.right && y >= pb.top && y <= pb.bottom) {
+        puddleWobbleRef.current = Math.min(1, puddleWobbleRef.current + 0.25);
+      }
+    };
+
+    // decay wobbles every frame and apply transforms to hand + puddle
+    let wobbleRaf = 0;
+    const wobbleTick = () => {
+      handWobbleRef.current *= 0.9;
+      if (handWobbleRef.current < 0.01) handWobbleRef.current = 0;
+      puddleWobbleRef.current *= 0.94;
+      if (puddleWobbleRef.current < 0.01) puddleWobbleRef.current = 0;
+
+      if (handRef.current && mouseRef.current.active) {
+        const w = handWobbleRef.current;
+        const t = performance.now() * 0.02;
+        const shakeX = w * Math.sin(t * 1.7) * 10;
+        const shakeY = w * Math.cos(t * 2.1) * 8;
+        const shakeR = w * Math.sin(t * 2.4) * 0.3;
+        const x = mouseRef.current.x;
+        const y = mouseRef.current.y;
+        handRef.current.style.transform = `translate(${x - 36 + shakeX}px, ${y - 36 + shakeY}px) rotate(${-0.26 + shakeR}rad)`;
         handRef.current.style.opacity = "1";
         handRef.current.style.filter = dirtyRef.current ? DIRTY_FILTER : CLEAN_FILTER;
         handRef.current.innerHTML = dirtyRef.current ? "✋💩" : "✋";
       }
+
+      if (puddleRef.current) {
+        const w = puddleWobbleRef.current;
+        const t = performance.now() * 0.006;
+        const sx = 1 + w * Math.sin(t * 1.3) * 0.05;
+        const sy = 1 + w * Math.cos(t * 1.7) * 0.05;
+        const rot = w * Math.sin(t * 0.9) * 0.025;
+        puddleRef.current.style.transform = `scale(${sx}, ${sy}) rotate(${rot}rad)`;
+      }
+      wobbleRaf = requestAnimationFrame(wobbleTick);
     };
+    wobbleRaf = requestAnimationFrame(wobbleTick);
 
     const onMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
     const onTouchMove = (e: TouchEvent) => {
@@ -447,6 +488,7 @@ const Index = () => {
 
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(wobbleRaf);
       window.removeEventListener("resize", generate);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
@@ -461,16 +503,18 @@ const Index = () => {
       <canvas ref={quotesCanvasRef} className="absolute inset-0 block h-full w-full" />
       <canvas ref={grassCanvasRef} className="absolute inset-0 block h-full w-full" />
       <img
+        ref={puddleRef}
         src={puddleImage}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute z-[5] select-none"
+        className="pointer-events-none absolute z-[5] select-none will-change-transform"
         style={{
           left: PUDDLE.marginLeft,
           bottom: PUDDLE.marginBottom,
           width: `clamp(${PUDDLE.minWidth}px, ${PUDDLE.widthPct * 100}vw, ${PUDDLE.maxWidth}px)`,
           filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.55))",
           mixBlendMode: "multiply",
+          transformOrigin: "center bottom",
         }}
       />
       <div
