@@ -184,27 +184,39 @@ const Index = () => {
       blades.sort((a, b) => a.baseY - b.baseY);
 
       // scatter quotes in a loose grid to avoid overlap
-      quotes = [];
-      const cols = width < 700 ? 2 : 3;
-      const rows = Math.ceil(QUOTES.length / cols);
+      const onScreen = Math.min(MAX_ON_SCREEN, quotePool.length);
+      const cols = width < 700 ? 2 : Math.min(3, onScreen);
+      const rows = Math.ceil(onScreen / cols);
       const cellW = width / cols;
       const cellH = height / rows;
       const maxWidth = Math.min(cellW * 0.85, 360);
 
-      QUOTES.forEach((q, i) => {
+      const makeQuoteAt = (i: number): Quote => {
         const col = i % cols;
         const row = Math.floor(i / cols);
         const cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.2;
         const cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.2;
-        quotes.push({
+        const q = nextQuote();
+        return {
           text: q.text,
           author: q.author,
           x: cx,
           y: cy,
           maxWidth,
           rotation: (Math.random() - 0.5) * 0.08,
-        });
-      });
+          revealProgress: 0,
+          revealed: false,
+        };
+      };
+
+      // expose for use inside draw() to recycle a slot after reveal
+      replaceQuoteSlot = (i: number) => {
+        quotes[i] = makeQuoteAt(i);
+      };
+
+      queue = shuffle(quotePool);
+      quotes = [];
+      for (let i = 0; i < onScreen; i++) quotes.push(makeQuoteAt(i));
 
       drawQuotes();
     };
