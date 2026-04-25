@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import grassTexture from "@/assets/grass.jpg";
+import puddleImage from "@/assets/puddle.png";
 import { supabase } from "@/integrations/supabase/client";
+
+// puddle position/size — kept in one place so quote layout can avoid it
+const PUDDLE = {
+  // bottom-left, sized relative to viewport
+  widthPct: 0.28, // 28% of viewport width
+  maxWidth: 360,
+  minWidth: 200,
+  marginLeft: 24,
+  marginBottom: 24,
+};
 
 interface Blade {
   x: number;
@@ -183,6 +194,16 @@ const Index = () => {
       }
       blades.sort((a, b) => a.baseY - b.baseY);
 
+      // puddle bounding box (lower-left). quotes that would land inside it get nudged out.
+      const puddleW = Math.max(PUDDLE.minWidth, Math.min(PUDDLE.maxWidth, width * PUDDLE.widthPct));
+      const puddleH = puddleW * 0.78; // image aspect ratio is roughly 4:3
+      const puddleLeft = PUDDLE.marginLeft;
+      const puddleTop = height - PUDDLE.marginBottom - puddleH;
+      const puddleRight = puddleLeft + puddleW;
+      const puddleBottom = puddleTop + puddleH;
+      const inPuddle = (x: number, y: number, pad = 40) =>
+        x > puddleLeft - pad && x < puddleRight + pad && y > puddleTop - pad && y < puddleBottom + pad;
+
       // scatter quotes in a loose grid to avoid overlap
       const onScreen = Math.min(MAX_ON_SCREEN, quotePool.length);
       const cols = width < 700 ? 2 : Math.min(3, onScreen);
@@ -194,8 +215,16 @@ const Index = () => {
       const makeQuoteAt = (i: number): Quote => {
         const col = i % cols;
         const row = Math.floor(i / cols);
-        const cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.2;
-        const cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.2;
+        let cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.2;
+        let cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.2;
+        // if the quote would fall behind the puddle, push it up & right out of the way
+        if (inPuddle(cx, cy)) {
+          cy = Math.max(cy, puddleTop - 60);
+          if (cx < puddleRight + 20) cx = puddleRight + 40;
+          // clamp to viewport
+          cy = Math.max(40, Math.min(height - 40, cy));
+          cx = Math.max(40, Math.min(width - 40, cx));
+        }
         const q = nextQuote();
         return {
           text: q.text,
@@ -352,6 +381,19 @@ const Index = () => {
       <h1 className="sr-only">Touch Grass — Inspirational Quotes Hidden in a Field</h1>
       <canvas ref={quotesCanvasRef} className="absolute inset-0 block h-full w-full" />
       <canvas ref={grassCanvasRef} className="absolute inset-0 block h-full w-full" />
+      <img
+        src={puddleImage}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute z-[5] select-none"
+        style={{
+          left: PUDDLE.marginLeft,
+          bottom: PUDDLE.marginBottom,
+          width: `clamp(${PUDDLE.minWidth}px, ${PUDDLE.widthPct * 100}vw, ${PUDDLE.maxWidth}px)`,
+          filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.55))",
+          mixBlendMode: "multiply",
+        }}
+      />
       <div
         ref={handRef}
         aria-hidden
