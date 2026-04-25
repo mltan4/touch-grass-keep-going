@@ -85,10 +85,10 @@ const Index = () => {
 
     const drawQuotes = () => {
       qctx.clearRect(0, 0, width, height);
-      // soft background gradient (what the spotlight reveals beneath the grass)
+      // rich soil background (what the spotlight reveals beneath the grass)
       const bg = qctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) / 1.2);
-      bg.addColorStop(0, "hsl(45, 30%, 12%)");
-      bg.addColorStop(1, "hsl(35, 25%, 6%)");
+      bg.addColorStop(0, "hsl(28, 45%, 22%)");
+      bg.addColorStop(1, "hsl(22, 50%, 10%)");
       qctx.fillStyle = bg;
       qctx.fillRect(0, 0, width, height);
 
