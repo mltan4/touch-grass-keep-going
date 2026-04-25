@@ -212,6 +212,8 @@ const Index = () => {
           sat: 60 + Math.random() * 30,
           light: 35 + Math.random() * 30,
           phase: Math.random() * Math.PI * 2,
+          speed: 1.6 + Math.random() * 1.6, // each blade sways at its own pace
+          amp: 2 + Math.random() * 4,        // and its own intensity
           bend: 0,
           targetBend: 0,
         });
