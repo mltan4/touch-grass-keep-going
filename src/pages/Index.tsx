@@ -513,18 +513,43 @@ const Index = () => {
       puddleWobbleRef.current *= 0.94;
       if (puddleWobbleRef.current < 0.01) puddleWobbleRef.current = 0;
 
+      // rinsing progress: counts from 1 down to 0 over ~1s; while active,
+      // we keep the hand shaking, splash the puddle, and show bubbles
+      if (rinsingRef.current > 0) {
+        rinsingRef.current = Math.max(0, rinsingRef.current - 0.018);
+        handWobbleRef.current = Math.max(handWobbleRef.current, rinsingRef.current);
+        puddleWobbleRef.current = Math.max(puddleWobbleRef.current, rinsingRef.current * 0.9);
+        if (rinsingRef.current === 0) {
+          dirtyRef.current = false;
+        }
+      }
+
       if (handRef.current && mouseRef.current.active) {
         const w = handWobbleRef.current;
         const t = performance.now() * 0.02;
-        const shakeX = w * Math.sin(t * 1.7) * 10;
-        const shakeY = w * Math.cos(t * 2.1) * 8;
-        const shakeR = w * Math.sin(t * 2.4) * 0.3;
+        // rinse adds a faster, jitterier shake on top of the regular wobble
+        const rinse = rinsingRef.current;
+        const shakeX = w * Math.sin(t * 1.7) * 10 + rinse * Math.sin(t * 6) * 6;
+        const shakeY = w * Math.cos(t * 2.1) * 8 + rinse * Math.cos(t * 5.3) * 5;
+        const shakeR = w * Math.sin(t * 2.4) * 0.3 + rinse * Math.sin(t * 7) * 0.15;
         const x = mouseRef.current.x;
         const y = mouseRef.current.y;
         handRef.current.style.transform = `translate(${x - 36 + shakeX}px, ${y - 36 + shakeY}px) rotate(${-0.26 + shakeR}rad)`;
         handRef.current.style.opacity = "1";
         handRef.current.style.filter = dirtyRef.current ? DIRTY_FILTER : CLEAN_FILTER;
         handRef.current.innerHTML = dirtyRef.current ? "✋💩" : "✋";
+      }
+
+      if (bubblesRef.current) {
+        const r = rinsingRef.current;
+        if (r > 0 && mouseRef.current.active) {
+          const x = mouseRef.current.x;
+          const y = mouseRef.current.y;
+          bubblesRef.current.style.opacity = String(Math.min(1, r * 1.4));
+          bubblesRef.current.style.transform = `translate(${x - 40}px, ${y - 40}px) scale(${0.8 + (1 - r) * 0.5})`;
+        } else {
+          bubblesRef.current.style.opacity = "0";
+        }
       }
 
       if (puddleRef.current) {
