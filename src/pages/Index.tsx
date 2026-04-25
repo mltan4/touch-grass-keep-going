@@ -49,6 +49,7 @@ const Index = () => {
   const grassCanvasRef = useRef<HTMLCanvasElement>(null);
   const handRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
+  const dirtyRef = useRef(false);
   const [quotePool, setQuotePool] = useState<{ text: string; author: string }[]>(FALLBACK_QUOTES);
 
   useEffect(() => {
