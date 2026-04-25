@@ -49,6 +49,7 @@ const Index = () => {
   const grassCanvasRef = useRef<HTMLCanvasElement>(null);
   const handRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
+  const dirtyRef = useRef(false);
   const [quotePool, setQuotePool] = useState<{ text: string; author: string }[]>(FALLBACK_QUOTES);
 
   useEffect(() => {
@@ -77,12 +78,14 @@ const Index = () => {
     const qctx = quotesCanvas.getContext("2d")!;
     let blades: Blade[] = [];
     let quotes: Quote[] = [];
+    let poops: { x: number; y: number; size: number }[] = [];
     let queue: { text: string; author: string }[] = [];
     let replaceQuoteSlot: (i: number) => void = () => {};
     let raf = 0;
     let width = 0;
     let height = 0;
     let bgReady = false;
+    let puddleBox = { left: 0, top: 0, right: 0, bottom: 0 };
 
     const shuffle = <T,>(arr: T[]): T[] => {
       const a = [...arr];
@@ -157,6 +160,19 @@ const Index = () => {
         qctx.fillStyle = "hsl(45, 50%, 70%)";
         qctx.fillText(`— ${q.author}`, 0, totalH / 2 + lineHeight * 0.6);
 
+        qctx.restore();
+      }
+
+      // poops, hidden in the field — drawn on the quotes canvas so the spotlight reveals them too
+      for (const p of poops) {
+        qctx.save();
+        qctx.translate(p.x, p.y);
+        qctx.font = `${p.size}px serif`;
+        qctx.textAlign = "center";
+        qctx.textBaseline = "middle";
+        qctx.shadowColor = "rgba(0,0,0,0.6)";
+        qctx.shadowBlur = 8;
+        qctx.fillText("💩", 0, 0);
         qctx.restore();
       }
     };
@@ -246,6 +262,22 @@ const Index = () => {
       queue = shuffle(quotePool);
       quotes = [];
       for (let i = 0; i < onScreen; i++) quotes.push(makeQuoteAt(i));
+
+      // store puddle box for hand-washing detection
+      puddleBox = { left: puddleLeft, top: puddleTop, right: puddleRight, bottom: puddleBottom };
+
+      // hide 3 poops in random spots, away from the puddle and screen edges
+      poops = [];
+      for (let i = 0; i < 3; i++) {
+        let px = 0;
+        let py = 0;
+        for (let attempt = 0; attempt < 30; attempt++) {
+          px = 80 + Math.random() * (width - 160);
+          py = 80 + Math.random() * (height - 160);
+          if (!inPuddle(px, py, 60)) break;
+        }
+        poops.push({ x: px, y: py, size: 32 + Math.random() * 14 });
+      }
 
       drawQuotes();
     };
@@ -339,13 +371,37 @@ const Index = () => {
       raf = requestAnimationFrame(draw);
     };
 
+    const CLEAN_FILTER = "drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
+    const DIRTY_FILTER =
+      "sepia(1) saturate(3) hue-rotate(-30deg) brightness(0.55) drop-shadow(0 4px 6px rgba(0,0,0,0.5))";
+
     const onMove = (x: number, y: number) => {
       mouseRef.current.x = x;
       mouseRef.current.y = y;
       mouseRef.current.active = true;
+
+      // poop touch — center hit only
+      if (!dirtyRef.current) {
+        for (const p of poops) {
+          const dx = x - p.x;
+          const dy = y - p.y;
+          if (dx * dx + dy * dy < (p.size * 0.35) * (p.size * 0.35)) {
+            dirtyRef.current = true;
+            break;
+          }
+        }
+      } else {
+        // wash hand if cursor enters the puddle
+        const pb = puddleBox;
+        if (x >= pb.left && x <= pb.right && y >= pb.top && y <= pb.bottom) {
+          dirtyRef.current = false;
+        }
+      }
+
       if (handRef.current) {
         handRef.current.style.transform = `translate(${x - 18}px, ${y - 18}px) rotate(-15deg)`;
         handRef.current.style.opacity = "1";
+        handRef.current.style.filter = dirtyRef.current ? DIRTY_FILTER : CLEAN_FILTER;
       }
     };
 
