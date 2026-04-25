@@ -232,29 +232,81 @@ const Index = () => {
       const inPuddle = (x: number, y: number, pad = 40) =>
         x > puddleLeft - pad && x < puddleRight + pad && y > puddleTop - pad && y < puddleBottom + pad;
 
-      // scatter quotes in a loose grid to avoid overlap
-      const onScreen = Math.min(MAX_ON_SCREEN, quotePool.length);
-      const cols = width < 700 ? 2 : Math.min(3, onScreen);
-      const rows = Math.ceil(onScreen / cols);
+      // figure out the grid based on viewport, then cap on-screen count
+      // so each quote actually fits inside its cell without colliding
+      const cols = width < 700 ? 1 : width < 1100 ? 2 : 3;
+      const rows = height < 600 ? 2 : height < 900 ? 3 : 4;
+      const onScreen = Math.min(MAX_ON_SCREEN, quotePool.length, cols * rows);
       const cellW = width / cols;
       const cellH = height / rows;
-      const maxWidth = Math.min(cellW * 0.78, 320);
+      const fontPx = Math.max(14, Math.min(20, width / 50)) * 0.9;
+      const lineHeight = fontPx * 1.4;
+      // leave generous padding inside the cell so wrapped lines + author don't bleed out
+      const maxWidth = Math.min(cellW * 0.7, 300);
 
-      const makeQuoteAt = (i: number): Quote => {
+      // measure how tall a quote will render so we can detect collisions
+      const measureHeight = (text: string): number => {
+        const lines = wrapLines(text, maxWidth, fontPx);
+        return lines.length * lineHeight + lineHeight * 1.2; // body + author
+      };
+
+      const collides = (
+        cx: number,
+        cy: number,
+        halfW: number,
+        halfH: number,
+        others: Quote[],
+      ): boolean => {
+        const pad = 16;
+        for (const o of others) {
+          const oHalfW = o.maxWidth / 2 + pad;
+          const oH = measureHeight(o.text);
+          const oHalfH = oH / 2 + pad;
+          if (
+            Math.abs(cx - o.x) < halfW + oHalfW &&
+            Math.abs(cy - o.y) < halfH + oHalfH
+          ) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      const makeQuoteAt = (i: number, existing: Quote[]): Quote => {
         const col = i % cols;
         const row = Math.floor(i / cols);
-        // smaller jitter so quotes stay inside their cell and don't overlap neighbours
-        let cx = cellW * col + cellW / 2 + (Math.random() - 0.5) * cellW * 0.08;
-        let cy = cellH * row + cellH / 2 + (Math.random() - 0.5) * cellH * 0.08;
-        // if the quote would fall behind the puddle, push it up & right out of the way
-        if (inPuddle(cx, cy)) {
-          cy = Math.max(cy, puddleTop - 60);
-          if (cx < puddleRight + 20) cx = puddleRight + 40;
-          // clamp to viewport
-          cy = Math.max(40, Math.min(height - 40, cy));
-          cx = Math.max(40, Math.min(width - 40, cx));
-        }
         const q = nextQuote();
+        const h = measureHeight(q.text);
+        const halfW = maxWidth / 2;
+        const halfH = h / 2;
+
+        // start from cell center, then nudge to find a non-overlapping spot
+        const baseX = cellW * col + cellW / 2;
+        const baseY = cellH * row + cellH / 2;
+        let cx = baseX;
+        let cy = baseY;
+
+        for (let attempt = 0; attempt < 30; attempt++) {
+          const jitter = attempt === 0 ? 0 : 1;
+          cx = baseX + (Math.random() - 0.5) * cellW * 0.15 * jitter;
+          cy = baseY + (Math.random() - 0.5) * Math.max(0, cellH - h) * 0.6 * jitter;
+
+          // keep fully on screen
+          cx = Math.max(halfW + 12, Math.min(width - halfW - 12, cx));
+          cy = Math.max(halfH + 12, Math.min(height - halfH - 12, cy));
+
+          // dodge the puddle
+          if (inPuddle(cx, cy, 20)) {
+            cy = Math.min(cy, puddleTop - halfH - 20);
+            if (cx - halfW < puddleRight + 20 && cy + halfH > puddleTop) {
+              cx = Math.min(width - halfW - 12, puddleRight + halfW + 20);
+            }
+            cy = Math.max(halfH + 12, cy);
+          }
+
+          if (!collides(cx, cy, halfW, halfH, existing)) break;
+        }
+
         return {
           text: q.text,
           author: q.author,
@@ -269,12 +321,13 @@ const Index = () => {
 
       // expose for use inside draw() to recycle a slot after reveal
       replaceQuoteSlot = (i: number) => {
-        quotes[i] = makeQuoteAt(i);
+        const others = quotes.filter((_, idx) => idx !== i);
+        quotes[i] = makeQuoteAt(i, others);
       };
 
       queue = shuffle(quotePool);
       quotes = [];
-      for (let i = 0; i < onScreen; i++) quotes.push(makeQuoteAt(i));
+      for (let i = 0; i < onScreen; i++) quotes.push(makeQuoteAt(i, quotes));
 
       // store puddle box for hand-washing detection
       puddleBox = { left: puddleLeft, top: puddleTop, right: puddleRight, bottom: puddleBottom };
