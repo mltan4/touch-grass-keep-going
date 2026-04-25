@@ -330,12 +330,26 @@ const Index = () => {
       const radius = 110;
       const radiusSq = radius * radius;
       const time = t * 0.001;
-      // a slow, drifting wind that pushes all blades in the same direction,
-      // with a faster gust riding on top for a natural "breeze" feel
-      const wind = Math.sin(time * 0.5) * 6 + Math.sin(time * 1.7 + 1.3) * 3;
+
+      // weather cycle: 10s fair, 20s storm, repeating
+      const elapsed = (performance.now() - startedAt) / 1000;
+      const cycle = elapsed % 30;
+      let storm = 0;
+      if (cycle > 10 && cycle < 30) {
+        const local = cycle - 10; // 0..20
+        // ramp up over 1.5s, hold, ramp down over 1.5s
+        storm = Math.min(1, local / 1.5, (20 - local) / 1.5);
+        storm = Math.max(0, storm);
+      }
+
+      // wind picks up during storms; layered sines feel less mechanical
+      const windBase = Math.sin(time * 0.7) * 7 + Math.sin(time * 2.1 + 1.3) * 4 + Math.sin(time * 3.4 + 0.7) * 2;
+      const wind = windBase * (1 + storm * 1.6);
 
       for (const b of blades) {
-        const ambient = Math.sin(time * 1.2 + b.phase) * 3;
+        // per-blade speed and amplitude make the field look organic, not like lines
+        const ambient = Math.sin(time * b.speed + b.phase) * b.amp +
+                        Math.sin(time * b.speed * 2.3 + b.phase * 1.7) * b.amp * 0.4;
         let push = 0;
         if (mouseRef.current.active) {
           const dx = b.x - mx;
@@ -348,21 +362,64 @@ const Index = () => {
           }
         }
         b.targetBend = ambient + wind + push;
-        b.bend += (b.targetBend - b.bend) * 0.18;
+        b.bend += (b.targetBend - b.bend) * 0.28;
 
         const tipX = b.x + b.bend;
         const tipY = b.baseY - b.height;
         const ctrlX = b.x + b.bend * 0.5;
         const ctrlY = b.baseY - b.height * 0.55;
+        // taper the tip so blades look like leaves rather than rectangles
+        const baseHalf = b.width / 2;
+        const tipHalf = b.width * 0.15;
 
         ctx.beginPath();
-        ctx.moveTo(b.x - b.width / 2, b.baseY);
-        ctx.quadraticCurveTo(ctrlX - b.width / 2, ctrlY, tipX, tipY);
-        ctx.quadraticCurveTo(ctrlX + b.width / 2, ctrlY, b.x + b.width / 2, b.baseY);
+        ctx.moveTo(b.x - baseHalf, b.baseY);
+        ctx.quadraticCurveTo(ctrlX - baseHalf * 0.6, ctrlY, tipX - tipHalf, tipY);
+        ctx.lineTo(tipX + tipHalf, tipY);
+        ctx.quadraticCurveTo(ctrlX + baseHalf * 0.6, ctrlY, b.x + baseHalf, b.baseY);
         ctx.closePath();
 
-        ctx.fillStyle = `hsl(${b.hue}, ${b.sat}%, ${b.light}%)`;
+        // darken slightly during storms for a gloomy, wet look
+        const light = b.light - storm * 14;
+        const sat = b.sat - storm * 20;
+        ctx.fillStyle = `hsl(${b.hue}, ${sat}%, ${light}%)`;
         ctx.fill();
+      }
+
+      // rain + gloom overlay
+      if (storm > 0) {
+        // gloom wash
+        ctx.fillStyle = `rgba(20, 30, 45, ${0.35 * storm})`;
+        ctx.fillRect(0, 0, width, height);
+
+        // spawn drops proportional to storm intensity
+        const target = Math.floor(220 * storm);
+        while (drops.length < target) {
+          drops.push({
+            x: Math.random() * width,
+            y: Math.random() * -height,
+            len: 8 + Math.random() * 14,
+            speed: 9 + Math.random() * 9,
+          });
+        }
+        if (drops.length > target) drops.length = target;
+
+        ctx.strokeStyle = `rgba(180, 200, 220, ${0.45 * storm})`;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        for (const d of drops) {
+          d.y += d.speed;
+          d.x += d.speed * 0.25; // slanted rain
+          if (d.y > height) {
+            d.y = -10;
+            d.x = Math.random() * width - 40;
+          }
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - d.speed * 0.25, d.y - d.len);
+        }
+        ctx.stroke();
+      } else if (drops.length) {
+        drops = [];
       }
 
       // spotlight: erase a soft circle from the grass to reveal the quote layer
