@@ -263,6 +263,22 @@ const Index = () => {
       quotes = [];
       for (let i = 0; i < onScreen; i++) quotes.push(makeQuoteAt(i));
 
+      // store puddle box for hand-washing detection
+      puddleBox = { left: puddleLeft, top: puddleTop, right: puddleRight, bottom: puddleBottom };
+
+      // hide 3 poops in random spots, away from the puddle and screen edges
+      poops = [];
+      for (let i = 0; i < 3; i++) {
+        let px = 0;
+        let py = 0;
+        for (let attempt = 0; attempt < 30; attempt++) {
+          px = 80 + Math.random() * (width - 160);
+          py = 80 + Math.random() * (height - 160);
+          if (!inPuddle(px, py, 60)) break;
+        }
+        poops.push({ x: px, y: py, size: 32 + Math.random() * 14 });
+      }
+
       drawQuotes();
     };
 
