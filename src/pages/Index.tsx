@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import grassTexture from "@/assets/grass.jpg";
 
 interface Blade {
   x: number;
@@ -56,6 +57,13 @@ const Index = () => {
     let raf = 0;
     let width = 0;
     let height = 0;
+    let bgPattern: CanvasPattern | null = null;
+
+    const bgImage = new Image();
+    bgImage.src = grassTexture;
+    bgImage.onload = () => {
+      bgPattern = ctx.createPattern(bgImage, "repeat");
+    };
 
     const wrapLines = (text: string, maxWidth: number, fontPx: number): string[] => {
       qctx.font = `italic ${fontPx}px 'Georgia', serif`;
@@ -137,9 +145,9 @@ const Index = () => {
           baseY: Math.random() * height,
           height: 18 + Math.random() * 38,
           width: 1.5 + Math.random() * 2.5,
-          hue: 95 + Math.random() * 35,
-          sat: 45 + Math.random() * 30,
-          light: 22 + Math.random() * 28,
+          hue: 80 + Math.random() * 40,
+          sat: 60 + Math.random() * 30,
+          light: 35 + Math.random() * 30,
           phase: Math.random() * Math.PI * 2,
           bend: 0,
           targetBend: 0,
@@ -174,13 +182,15 @@ const Index = () => {
     };
 
     const draw = (t: number) => {
-      // grass background gradient
-      const grad = ctx.createLinearGradient(0, 0, 0, height);
-      grad.addColorStop(0, "hsl(140, 40%, 8%)");
-      grad.addColorStop(1, "hsl(110, 35%, 14%)");
+      // realistic grass photo background (tiled)
       ctx.globalCompositeOperation = "source-over";
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
+      if (bgPattern) {
+        ctx.fillStyle = bgPattern;
+        ctx.fillRect(0, 0, width, height);
+      } else {
+        ctx.fillStyle = "hsl(110, 45%, 25%)";
+        ctx.fillRect(0, 0, width, height);
+      }
 
       const mx = mouseRef.current.x;
       const my = mouseRef.current.y;
