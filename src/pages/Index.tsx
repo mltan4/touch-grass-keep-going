@@ -424,18 +424,40 @@ const Index = () => {
         drops = [];
       }
 
-      // spotlight: erase a soft circle from the grass to reveal the quote layer
+      // spotlight: erase a hand-shaped hole from the grass to reveal the quote layer.
+      // We compose a palm + 5 fingers from ellipses so the cleared area roughly matches
+      // the ✋ emoji that follows the cursor.
       if (mouseRef.current.active) {
-        const spotR = 180;
-        const spot = ctx.createRadialGradient(mx, my, 0, mx, my, spotR);
-        spot.addColorStop(0, "rgba(0,0,0,1)");
-        spot.addColorStop(0.55, "rgba(0,0,0,0.85)");
-        spot.addColorStop(1, "rgba(0,0,0,0)");
         ctx.globalCompositeOperation = "destination-out";
-        ctx.fillStyle = spot;
+        ctx.filter = "blur(8px)"; // soft edges so the reveal feels organic
+        ctx.fillStyle = "rgba(0,0,0,1)";
+
+        // palm — slightly below the cursor so the fingertips line up with the cursor tip
+        const cx = mx;
+        const cy = my + 30;
         ctx.beginPath();
-        ctx.arc(mx, my, spotR, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, 70, 85, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        // 4 fingers + thumb. Angles tuned to roughly mirror the ✋ pose.
+        const fingers: Array<[number, number, number, number, number]> = [
+          // [angleDeg, distance, length(rx), width(ry), tilt]
+          [-78, 110, 22, 50, -0.05], // index
+          [-92, 118, 22, 55, 0],     // middle (tallest)
+          [-106, 110, 22, 50, 0.05], // ring
+          [-120, 95, 20, 42, 0.15],  // pinky
+          [-45, 95, 20, 42, -0.6],   // thumb (off to the side)
+        ];
+        for (const [angleDeg, dist, rx, ry, tilt] of fingers) {
+          const a = (angleDeg * Math.PI) / 180;
+          const fx = cx + Math.cos(a) * dist;
+          const fy = cy + Math.sin(a) * dist;
+          ctx.beginPath();
+          ctx.ellipse(fx, fy, rx, ry, a + Math.PI / 2 + tilt, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.filter = "none";
         ctx.globalCompositeOperation = "source-over";
 
         // reveal tracking: if the spotlight lingers near a quote, mark it revealed and swap it
