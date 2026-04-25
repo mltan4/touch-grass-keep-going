@@ -23,7 +23,11 @@ interface Quote {
   y: number;
   maxWidth: number;
   rotation: number;
+  revealProgress: number;
+  revealed: boolean;
 }
+
+const MAX_ON_SCREEN = 12;
 
 const FALLBACK_QUOTES: { text: string; author: string }[] = [
   { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
