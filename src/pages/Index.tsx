@@ -487,10 +487,14 @@ const Index = () => {
           }
         }
       } else {
-        // wash hand if cursor enters the puddle
+        // entering the puddle while dirty kicks off a rinse animation —
+        // the actual reset happens after the rinse completes
         const pb = puddleBox;
-        if (x >= pb.left && x <= pb.right && y >= pb.top && y <= pb.bottom) {
-          dirtyRef.current = false;
+        const inside = x >= pb.left && x <= pb.right && y >= pb.top && y <= pb.bottom;
+        if (inside && rinsingRef.current === 0) {
+          rinsingRef.current = 1; // counts down to 0 in wobbleTick
+          handWobbleRef.current = 1;
+          puddleWobbleRef.current = 1;
         }
       }
 
