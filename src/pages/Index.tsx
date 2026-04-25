@@ -488,6 +488,7 @@ const Index = () => {
 
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(wobbleRaf);
       window.removeEventListener("resize", generate);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
