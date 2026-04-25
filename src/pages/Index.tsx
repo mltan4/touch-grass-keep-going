@@ -320,6 +320,9 @@ const Index = () => {
       const radius = 110;
       const radiusSq = radius * radius;
       const time = t * 0.001;
+      // a slow, drifting wind that pushes all blades in the same direction,
+      // with a faster gust riding on top for a natural "breeze" feel
+      const wind = Math.sin(time * 0.5) * 6 + Math.sin(time * 1.7 + 1.3) * 3;
 
       for (const b of blades) {
         const ambient = Math.sin(time * 1.2 + b.phase) * 3;
@@ -334,7 +337,7 @@ const Index = () => {
             push = Math.sign(dx) * strength * strength * 32;
           }
         }
-        b.targetBend = ambient + push;
+        b.targetBend = ambient + wind + push;
         b.bend += (b.targetBend - b.bend) * 0.18;
 
         const tipX = b.x + b.bend;
