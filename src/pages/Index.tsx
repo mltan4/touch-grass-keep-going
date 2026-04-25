@@ -416,6 +416,7 @@ const Index = () => {
           const dy = y - p.y;
           if (dx * dx + dy * dy < (p.size * 0.35) * (p.size * 0.35)) {
             dirtyRef.current = true;
+            handWobbleRef.current = 1; // kick off recoil shake
             break;
           }
         }
@@ -427,13 +428,46 @@ const Index = () => {
         }
       }
 
-      if (handRef.current) {
-        handRef.current.style.transform = `translate(${x - 36}px, ${y - 36}px) rotate(-15deg)`;
+      // ripple the puddle whenever the cursor is over it
+      const pb = puddleBox;
+      if (x >= pb.left && x <= pb.right && y >= pb.top && y <= pb.bottom) {
+        puddleWobbleRef.current = Math.min(1, puddleWobbleRef.current + 0.25);
+      }
+    };
+
+    // decay wobbles every frame and apply transforms to hand + puddle
+    let wobbleRaf = 0;
+    const wobbleTick = () => {
+      handWobbleRef.current *= 0.9;
+      if (handWobbleRef.current < 0.01) handWobbleRef.current = 0;
+      puddleWobbleRef.current *= 0.94;
+      if (puddleWobbleRef.current < 0.01) puddleWobbleRef.current = 0;
+
+      if (handRef.current && mouseRef.current.active) {
+        const w = handWobbleRef.current;
+        const t = performance.now() * 0.02;
+        const shakeX = w * Math.sin(t * 1.7) * 10;
+        const shakeY = w * Math.cos(t * 2.1) * 8;
+        const shakeR = w * Math.sin(t * 2.4) * 0.3;
+        const x = mouseRef.current.x;
+        const y = mouseRef.current.y;
+        handRef.current.style.transform = `translate(${x - 36 + shakeX}px, ${y - 36 + shakeY}px) rotate(${-0.26 + shakeR}rad)`;
         handRef.current.style.opacity = "1";
         handRef.current.style.filter = dirtyRef.current ? DIRTY_FILTER : CLEAN_FILTER;
         handRef.current.innerHTML = dirtyRef.current ? "✋💩" : "✋";
       }
+
+      if (puddleRef.current) {
+        const w = puddleWobbleRef.current;
+        const t = performance.now() * 0.006;
+        const sx = 1 + w * Math.sin(t * 1.3) * 0.05;
+        const sy = 1 + w * Math.cos(t * 1.7) * 0.05;
+        const rot = w * Math.sin(t * 0.9) * 0.025;
+        puddleRef.current.style.transform = `scale(${sx}, ${sy}) rotate(${rot}rad)`;
+      }
+      wobbleRaf = requestAnimationFrame(wobbleTick);
     };
+    wobbleRaf = requestAnimationFrame(wobbleTick);
 
     const onMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
     const onTouchMove = (e: TouchEvent) => {
