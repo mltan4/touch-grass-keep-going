@@ -25,6 +25,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      <TechStackBubble />
     </TooltipProvider>
   </QueryClientProvider>
 );
